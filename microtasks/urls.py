@@ -17,12 +17,34 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView
-from core.views import TaskListCreateView, TaskDetailView, RegisterView
+from core.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Tasks 
     path('api/tasks/', TaskListCreateView.as_view(), name='task-list'),
     path('api/tasks/<int:pk>/', TaskDetailView.as_view(), name='task-detail'),
+
+    # Authenticatiion
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token'),
+
+    # Registration
     path('api/register/', RegisterView.as_view(), name='register'),
+
+    # Profile view & update (private only)
+    path('api/profile/', ProfileView.as_view(), name='profile'),
+    path('api/profile/update/', ProfileUpdateView.as_view(), name='profile-update'),
+
+    # Public profile view
+    path('api/users/<str:username>/', PublicProfileView.as_view(), name='public-profile'),
+
+    # Role-based task views 
+    path('api/business-tasks/', BusinessTasksView.as_view(), name='business-tasks'),
+    path('api/worker-tasks/', WorkerTasksView.as_view(), name='worker-tasks'),
+
+    # Claiming & Completing tasks by Workers
+    path('api/tasks/<int:pk>/claim/', ClaimTaskView.as_view(), name='claim-task'),
+    path('api/tasks/<int:pk>/complete/', CompleteTaskView.as_view(), name='complete-task'),
+
 ]

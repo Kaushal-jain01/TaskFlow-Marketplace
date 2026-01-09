@@ -32,9 +32,29 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Used ONLY for REGISTRATION (POST /api/register/)
+    Purpose: Creates NEW UserProfile during signup
+    Fields: Only writable fields needed for creation (no user - auto-created)
+    """
     class Meta:
         model = UserProfile
         fields = ['role', 'phone', 'address']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Used for VIEW/UPDATE profile (GET/PUT /api/profile/)
+    Purpose: Shows COMPLETE profile info + username for logged-in user
+    Fields: Includes user details (read-only) for full profile display
+    Why separate: Registration creates, Profile displays/updates
+    """
+    user = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'role', 'phone', 'address']
+        read_only_fields = ['user']
 
 # RegisterSerializer accepts user + profile data, securely creates a User, hashes the password, 
 # creates a related UserProfile, and links them together in one request.
@@ -54,4 +74,5 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         UserProfile.objects.create(user=user, **profile_data)
         return user
+
 
