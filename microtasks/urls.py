@@ -49,6 +49,13 @@ urlpatterns = [
     path('api/tasks/<int:pk>/claim/', ClaimTaskView.as_view(), name='claim-task'),
     path('api/tasks/<int:pk>/complete/', CompleteTaskView.as_view(), name='complete-task'),
 
+    # Approving Task
+    path('api/tasks/<int:pk>/approve/', ApproveTaskView.as_view(), name='approve-task'),
+
+    # Payments
+    path('api/tasks/<int:task_id>/pay/', CreatePaymentIntentView.as_view(), name='create-payment'),
+    path('stripe/webhook/', stripe_webhook, name='stripe-webhook'),
+
 ]
 
 
