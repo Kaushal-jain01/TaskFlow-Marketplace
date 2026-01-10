@@ -168,35 +168,44 @@ class CompleteTaskView(APIView):
 
 class ApproveTaskView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, business=request.user, status='completed')
-        
+        task = get_object_or_404(Task, pk=pk, business=request.user, status="completed")
+
+        # 1️⃣ Create customer
+        customer = stripe.Customer.create(
+            name=request.user.username,
+            email=request.user.email,
+            address={
+                "line1": "Business Address",
+                "city": "Mumbai",
+                "state": "MH",
+                "postal_code": "400001",
+                "country": "IN",
+            },
+        )
+
+        # 2️⃣ Create payment intent
         intent = stripe.PaymentIntent.create(
             amount=int(task.price * 100),
-            currency='inr',
-            metadata={'task_id': str(task.id)},
-            automatic_payment_methods={
-                'enabled': True,
-                'allow_redirects': 'never'  # No 3DS!
-            }
-            # NO payment_method_types = FIXED!
+            currency="inr",
+            customer=customer.id,
+            description=f"Service payment for task {task.title}",
+            automatic_payment_methods={"enabled": True},
         )
-        
+
         payment = Payment.objects.create(
             task=task,
             stripe_payment_intent_id=intent.id,
             amount=task.price,
-            status='pending'
+            status="pending",
         )
-        
-        task.status = 'approved'
+
+        task.status = "approved"
         task.save()
-        
+
         return Response({
-            'message': '✅ Task approved! Payment required.',
-            'client_secret': intent.client_secret,
-            'payment_id': str(payment.id)
+            "client_secret": intent.client_secret
         })
 
 
