@@ -170,42 +170,11 @@ class ApproveTaskView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, business=request.user, status='completed')
-        
-        # Create payment intent (business pays NOW)
-        intent = stripe.PaymentIntent.create(
-            amount=int(task.price * 100),
-            currency='inr',
-            metadata={'task_id': str(task.id)},
-        )
-        
-        payment = Payment.objects.create(
-            task=task,
-            stripe_payment_intent_id=intent.id,
-            amount=task.price,
-            status='pending'
-        )
-        
-        task.status = 'approved'
-        task.save()
-        
-        return Response({
-            'message': '✅ Task approved! Payment required.',
-            'client_secret': intent.client_secret,
-            'payment_id': str(payment.id)
-        })
-
-
-# Create Payment Intent (Frontend calls this)
-class CreatePaymentIntentView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request, task_id):
-        task = get_object_or_404(Task, id=task_id, business=request.user)
-        
         try:
+            task = get_object_or_404(Task, pk=pk, business=request.user, status='completed')
+            
             intent = stripe.PaymentIntent.create(
-                amount=int(task.price * 100),  # Stripe uses cents
+                amount=int(task.price * 100),
                 currency='inr',
                 metadata={'task_id': str(task.id)},
             )
@@ -217,14 +186,17 @@ class CreatePaymentIntentView(APIView):
                 status='pending'
             )
             
+            task.status = 'approved'
+            task.save()
+            
             return Response({
+                'message': '✅ Task approved! Payment required.',
                 'client_secret': intent.client_secret,
                 'payment_id': str(payment.id)
             })
-        
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+            return Response({'error': str(e)}, status=500)
+
 
 # Webhook (Stripe calls this)
 @csrf_exempt

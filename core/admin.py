@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Task, UserProfile
+from .models import Task, UserProfile, Payment
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
@@ -9,4 +9,6 @@ class TaskAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'role', 'phone']
+
+admin.site.register(Payment)
 
