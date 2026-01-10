@@ -1,16 +1,24 @@
 from django.shortcuts import render, get_object_or_404
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated,  AllowAny
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from .models import Task
+from .models import *
 from .serializers import TaskSerializer, RegisterSerializer, ProfileSerializer
 from .models import UserProfile
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
+from django.http import JsonResponse
+import stripe
+from rest_framework.decorators import api_view, permission_classes
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
@@ -157,3 +165,94 @@ class CompleteTaskView(APIView):
             "message": "✅ Task completed with proof! Waiting business review.",
             "task": TaskSerializer(task).data
         })
+
+class ApproveTaskView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        task = get_object_or_404(Task, pk=pk, business=request.user, status='completed')
+        
+        # Create payment intent (business pays NOW)
+        intent = stripe.PaymentIntent.create(
+            amount=int(task.price * 100),
+            currency='inr',
+            metadata={'task_id': str(task.id)},
+        )
+        
+        payment = Payment.objects.create(
+            task=task,
+            stripe_payment_intent_id=intent.id,
+            amount=task.price,
+            status='pending'
+        )
+        
+        task.status = 'approved'
+        task.save()
+        
+        return Response({
+            'message': '✅ Task approved! Payment required.',
+            'client_secret': intent.client_secret,
+            'payment_id': str(payment.id)
+        })
+
+
+# Create Payment Intent (Frontend calls this)
+class CreatePaymentIntentView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, task_id):
+        task = get_object_or_404(Task, id=task_id, business=request.user)
+        
+        try:
+            intent = stripe.PaymentIntent.create(
+                amount=int(task.price * 100),  # Stripe uses cents
+                currency='inr',
+                metadata={'task_id': str(task.id)},
+            )
+            
+            payment = Payment.objects.create(
+                task=task,
+                stripe_payment_intent_id=intent.id,
+                amount=task.price,
+                status='pending'
+            )
+            
+            return Response({
+                'client_secret': intent.client_secret,
+                'payment_id': str(payment.id)
+            })
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+# Webhook (Stripe calls this)
+@csrf_exempt
+@require_http_methods(["POST"])
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        return JsonResponse({'error': 'Invalid payload'}, status=400)
+    except stripe.error.SignatureVerificationError:
+        return JsonResponse({'error': 'Invalid signature'}, status=400)
+
+    if event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        payment_id = payment_intent['metadata']['task_id']
+        
+        payment = Payment.objects.get(stripe_payment_intent_id=payment_intent['id'])
+        payment.status = 'paid'
+        payment.save()
+        
+        # Mark task as paid
+        task = payment.task
+        task.is_paid = True  # Add this field to Task model
+        task.save()
+
+    return JsonResponse({'status': 'success'})

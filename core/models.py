@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import uuid
 
 # UserProfile extends Django's built-in User model to store application-specific
 # information such as role (business/worker), phone number, and address.
@@ -17,6 +18,7 @@ class Task(models.Model):
         ('open', 'Open'), 
         ('claimed', 'Claimed'), 
         ('completed', 'Completed'), 
+        ('approved', 'Approved'),
         ('paid', 'Paid')
     ]
     
@@ -29,3 +31,23 @@ class Task(models.Model):
     proof_image = models.ImageField(upload_to='proofs/', blank=True, null=True)
     duration_minutes = models.IntegerField(default=15)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='payments')
+    stripe_payment_intent_id = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_paid = models.BooleanField(default=False) 
+    
+    def __str__(self):
+        return f"Payment {self.id} for Task {self.task.id}"

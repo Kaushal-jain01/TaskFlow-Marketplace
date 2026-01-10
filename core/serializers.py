@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Task, UserProfile
+from .models import *
 
 
 # `fields` controls what the API exposes and accepts:
@@ -77,4 +77,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         UserProfile.objects.create(user=user, **profile_data)
         return user
 
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = '__all__'
 
