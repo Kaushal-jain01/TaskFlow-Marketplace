@@ -57,6 +57,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['user', 'role', 'phone', 'address']
         read_only_fields = ['user']
 
+
 # RegisterSerializer accepts user + profile data, securely creates a User, hashes the password, 
 # creates a related UserProfile, and links them together in one request.
 class RegisterSerializer(serializers.ModelSerializer):
