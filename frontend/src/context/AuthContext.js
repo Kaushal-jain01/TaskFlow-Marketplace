@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_BASE = 'http://127.0.https://microtasks-api.onrender.com/api';
+const API_BASE = 'https://microtasks-api.onrender.com/api';
 
 const AuthContext = createContext(null);
 
