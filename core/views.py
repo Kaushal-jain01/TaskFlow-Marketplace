@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated,  AllowAny
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from .models import *
-from .serializers import TaskSerializer, RegisterSerializer, ProfileSerializer
+from .serializers import *
 from .models import UserProfile
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
@@ -285,6 +285,11 @@ def stripe_webhook(request):
 
     return JsonResponse({'status': 'success'}, status=200)
 
+
+class GetAllUsers(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny]
+    queryset = User.objects.all()
 
 # @api_view(['GET'])
 # def stripe_success(request):

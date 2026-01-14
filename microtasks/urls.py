@@ -59,7 +59,10 @@ urlpatterns = [
     path('api/tasks/<int:pk>/approve/', ApproveTaskView.as_view(), name='approve-task'),
 
     # Payments
-    path('stripe/webhook/', stripe_webhook, name='stripe-webhook')
+    path('stripe/webhook/', stripe_webhook, name='stripe-webhook'),
+
+    # List of all Users
+    path('api/all-users/', GetAllUsers.as_view(), name='get-all-users')
 
 ]
 
