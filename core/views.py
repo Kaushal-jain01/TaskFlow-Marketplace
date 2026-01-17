@@ -4,10 +4,13 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.http import JsonResponse
+from django.db.models import Q
+from django.db import transaction
 
 from rest_framework import generics, status
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -38,26 +41,31 @@ class TaskListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         queryset = Task.objects.all()
 
-        # Filter by status if query param is provided
         status = self.request.query_params.get('status')
         if status:
             queryset = queryset.filter(status=status)
 
-        # Filter by type if provided: posted, claimed, history
         type_filter = self.request.query_params.get('type')
+
         if type_filter == 'posted':
             queryset = queryset.filter(created_by=user)
+
         elif type_filter == 'claimed':
             queryset = queryset.filter(claimed_by=user)
-        elif type_filter == 'history':
-            queryset = queryset.filter(Q(status='completed') | Q(status='approved') | Q(status='paid'))
 
-        # Default ordering
+        elif type_filter == 'history':
+            queryset = queryset.filter(
+                Q(created_by=user) | Q(claimed_by=user),
+                status__in=['completed', 'approved', 'paid']
+            )
+
         return queryset.order_by('-updated_at')
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        if self.request.user.userprofile.role != 'business':
+            raise PermissionDenied("Only business users can create tasks.")
 
+        serializer.save(created_by=self.request.user)
 
 
 # ============================
@@ -66,7 +74,14 @@ class TaskListCreateView(generics.ListCreateAPIView):
 class TaskDetailView(generics.RetrieveAPIView):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
-    queryset = Task.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+        return Task.objects.filter(
+            Q(status='open') |
+            Q(created_by=user) |
+            Q(claimed_by=user)
+        )
 
 
 # ============================
@@ -75,9 +90,19 @@ class TaskDetailView(generics.RetrieveAPIView):
 class ClaimTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def patch(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, status='open')
+        task = get_object_or_404(
+            Task.objects.select_for_update(),
+            pk=pk,
+            status='open'
+        )
 
+        # Role check
+        if request.user.userprofile.role != 'worker':
+            raise PermissionDenied("Only workers can claim tasks.")
+
+        # Creator cannot claim own task
         if task.created_by == request.user:
             return Response(
                 {"error": "You cannot claim your own task"},
@@ -88,11 +113,10 @@ class ClaimTaskView(APIView):
         task.status = 'claimed'
         task.save()
 
-        return Response({
-            "message": "✅ Task claimed successfully",
-            "task": TaskSerializer(task).data
-        })
-
+        return Response(
+            TaskSerializer(task).data,
+            status=status.HTTP_200_OK
+        )
 
 # ============================
 # COMPLETE TASK (UPLOAD PROOF)
@@ -101,6 +125,7 @@ class CompleteTaskView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
+    @transaction.atomic
     def patch(self, request, pk):
         task = get_object_or_404(
             Task,
@@ -109,11 +134,13 @@ class CompleteTaskView(APIView):
             status='claimed'
         )
 
+        if request.user.userprofile.role != 'worker':
+            raise PermissionDenied("Only workers can complete tasks.")
+
         if 'proof_image' in request.data:
             task.proof_image = request.data['proof_image']
 
         task.status = 'completed'
-        task.updated_at = timezone.now()
         task.save()
 
         return Response({
@@ -121,14 +148,13 @@ class CompleteTaskView(APIView):
             "task": TaskSerializer(task).data
         })
 
-
 # ============================
 # APPROVE TASK
 # ============================
 class ApproveTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    def patch(self, request, pk):
         task = get_object_or_404(
             Task,
             pk=pk,
@@ -136,11 +162,17 @@ class ApproveTaskView(APIView):
             status='completed'
         )
 
+        # Optional: role enforcement
+        if request.user.userprofile.role != 'business':
+            raise PermissionDenied("Only business users can approve tasks.")
+
         task.status = 'approved'
-        task.updated_at = timezone.now()
         task.save()
 
-        return Response({"message": "✅ Task approved"})
+        return Response({
+            "message": "✅ Task approved",
+            "task": TaskSerializer(task).data
+        })
 
 
 # ============================
@@ -149,7 +181,8 @@ class ApproveTaskView(APIView):
 class PayTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    def patch(self, request, pk):
+        # Fetch the task: only creator can pay for approved tasks
         task = get_object_or_404(
             Task,
             pk=pk,
@@ -157,13 +190,22 @@ class PayTaskView(APIView):
             status='approved'
         )
 
+        # Role check: only business can trigger payment
+        if request.user.userprofile.role != 'business':
+            raise PermissionDenied("Only business users can pay for tasks.")
+
+        # Get business profile for billing details
+        business_profile = request.user.userprofile
+
+        # Create Stripe PaymentIntent
         intent = stripe.PaymentIntent.create(
-            amount=int(task.price * 100),
+            amount=int(task.price * 100),  # in smallest currency unit
             currency="inr",
             description=f"Payment for task {task.title}",
             automatic_payment_methods={"enabled": True},
         )
 
+        # Record payment in DB (status pending)
         Payment.objects.create(
             task=task,
             stripe_payment_intent_id=intent.id,
@@ -171,9 +213,20 @@ class PayTaskView(APIView):
             status="pending",
         )
 
-        return Response({"client_secret": intent.client_secret})
-
-
+        # Return client_secret + billing details for frontend
+        return Response({
+            "client_secret": intent.client_secret,
+            "billing_details": {
+                "name": request.user.username,
+                "address": {
+                    "line1": business_profile.address_line1,
+                    "city": business_profile.city,
+                    "country": business_profile.country,
+                    "postal_code": business_profile.postal_code,
+                }
+            }
+        })
+    
 # ============================
 # STRIPE WEBHOOK
 # ============================
@@ -231,8 +284,7 @@ class ProfileView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
-        return profile
+        return self.request.user.userprofile
 
 
 class ProfileUpdateView(generics.UpdateAPIView):
@@ -240,8 +292,7 @@ class ProfileUpdateView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
-        return profile
+        return self.request.user.userprofile
 
 
 class PublicProfileView(generics.RetrieveAPIView):
@@ -250,8 +301,7 @@ class PublicProfileView(generics.RetrieveAPIView):
 
     def get_object(self):
         user = get_object_or_404(User, username=self.kwargs["username"])
-        profile, _ = UserProfile.objects.get_or_create(user=user)
-        return profile
+        return get_object_or_404(UserProfile, user=user)
 
 
 # ============================
@@ -259,5 +309,5 @@ class PublicProfileView(generics.RetrieveAPIView):
 # ============================
 class GetAllUsers(generics.ListAPIView):
     serializer_class = UserSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     queryset = User.objects.all()

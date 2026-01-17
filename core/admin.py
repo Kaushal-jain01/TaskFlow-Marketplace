@@ -46,6 +46,6 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'phone',
-        'address',
+        'role'
     )
     search_fields = ('user__username', 'phone')

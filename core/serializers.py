@@ -22,9 +22,20 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = [
+            'id',
+            'title',
+            'description',
+            'price',
+            'created_by',
+            'claimed_by',
+            'status',
+            'proof_image',
+            'duration_minutes',
+            'created_at',
+            'updated_at',
+        ]
 
-        # Backend-controlled fields
         read_only_fields = [
             'id',
             'created_by',
@@ -33,6 +44,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
 
 
 # -------------------------
@@ -44,7 +56,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = UserProfile
-        fields = ['phone', 'address']
+        fields = [
+            'role',
+            'phone',
+            'address_line1',
+            'city',
+            'country',
+            'postal_code',
+        ]
+
 
 
 # -------------------------
@@ -55,8 +75,18 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['user', 'phone', 'address']
+        fields = [
+            'user',
+            'role',
+            'phone',
+            'address_line1',
+            'city',
+            'country',
+            'postal_code',
+            
+        ]
         read_only_fields = ['user']
+
 
 
 # -------------------------
@@ -90,5 +120,18 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = '__all__'
-        read_only_fields = ['id', 'stripe_payment_intent_id', 'created_at']
+        fields = [
+            'id',
+            'task',
+            'amount',
+            'status',
+            'created_at',
+        ]
+        read_only_fields = [
+            'id',
+            'task',
+            'amount',
+            'status',
+            'created_at',
+        ]
+

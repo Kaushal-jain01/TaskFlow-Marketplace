@@ -7,9 +7,21 @@ import uuid
 # number and address.
 
 class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ("business", "Business"),
+        ("worker", "Worker"),
+    )
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone = models.CharField(max_length=15, blank=True)
-    address = models.TextField(max_length=200, blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='worker')
+
+    phone = models.CharField(max_length=15)
+
+    address_line1 = models.CharField(max_length=100, default='Unknown')
+    city = models.CharField(max_length=50, default='Unknown')
+    country = models.CharField(max_length=5, default='IN')
+    postal_code = models.CharField(max_length=10, default='000000')
+
 
 class Task(models.Model):
     STATUS_CHOICES = [
