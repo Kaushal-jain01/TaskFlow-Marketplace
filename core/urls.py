@@ -1,19 +1,5 @@
 from django.urls import path
-from django.contrib import admin
-from core.views import (
-    TaskListCreateView,
-    TaskDetailView,
-    ClaimTaskView,
-    CompleteTaskView,
-    ApproveTaskView,
-    PayTaskView,
-    stripe_webhook,
-    RegisterView,
-    ProfileView,
-    ProfileUpdateView,
-    PublicProfileView,
-    GetAllUsers,
-)
+from core.views import *
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
@@ -34,10 +20,16 @@ urlpatterns = [
     # ============================
     path("tasks/", TaskListCreateView.as_view(), name="task-list-create"),
     path("tasks/<int:pk>/", TaskDetailView.as_view(), name="task-detail"),
+
+    # Actions
     path("tasks/<int:pk>/claim/", ClaimTaskView.as_view(), name="task-claim"),
     path("tasks/<int:pk>/complete/", CompleteTaskView.as_view(), name="task-complete"),
     path("tasks/<int:pk>/approve/", ApproveTaskView.as_view(), name="task-approve"),
     path("tasks/<int:pk>/pay/", PayTaskView.as_view(), name="task-pay"),
+
+    # Discussion
+    path("tasks/<int:pk>/comments/", TaskCommentListCreateView.as_view(), name="task-comments"),
+
 
     # ============================
     # STRIPE WEBHOOK

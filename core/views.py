@@ -19,13 +19,8 @@ from django.views.decorators.http import require_http_methods
 
 import stripe
 
-from .models import Task, Payment, UserProfile
-from .serializers import (
-    TaskSerializer,
-    RegisterSerializer,
-    ProfileSerializer,
-    UserSerializer,
-)
+from .models import *
+from .serializers import *
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -42,7 +37,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
         queryset = Task.objects.all()
 
         status = self.request.query_params.get('status')
-        if status:
+        if status == 'open':
             queryset = queryset.filter(status=status)
 
         type_filter = self.request.query_params.get('type')
@@ -72,7 +67,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
 # TASK DETAIL
 # ============================
 class TaskDetailView(generics.RetrieveAPIView):
-    serializer_class = TaskSerializer
+    serializer_class = TaskDetailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -128,7 +123,7 @@ class CompleteTaskView(APIView):
     @transaction.atomic
     def patch(self, request, pk):
         task = get_object_or_404(
-            Task,
+            Task.objects.select_for_update(),
             pk=pk,
             claimed_by=request.user,
             status='claimed'
@@ -137,16 +132,68 @@ class CompleteTaskView(APIView):
         if request.user.userprofile.role != 'worker':
             raise PermissionDenied("Only workers can complete tasks.")
 
-        if 'proof_image' in request.data:
-            task.proof_image = request.data['proof_image']
+        # Prevent double submission
+        if hasattr(task, 'completion'):
+            return Response(
+                {"error": "Task already completed"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        # Validate input
+        proof_image = request.data.get('proof_image')
+        completion_details = request.data.get('completion_details')
+
+        if not proof_image or not completion_details:
+            return Response(
+                {"error": "Proof image and completion details are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create completion
+        TaskCompletion.objects.create(
+            task=task,
+            completed_by=request.user,
+            proof_image=proof_image,
+            completion_details=completion_details
+        )
+
+        # Update task status
         task.status = 'completed'
         task.save()
 
-        return Response({
-            "message": "✅ Task marked as completed",
-            "task": TaskSerializer(task).data
-        })
+        return Response(
+            {
+                "message": "✅ Task marked as completed",
+                "task_id": task.id
+            },
+            status=status.HTTP_200_OK
+        )
+
+# ============================
+# COMMENT ON TASK
+# ============================
+class TaskCommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = TaskCommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        task = get_object_or_404(Task, pk=self.kwargs['pk'])
+        user = self.request.user
+
+        if user != task.created_by and user != task.claimed_by:
+            raise PermissionDenied("Not allowed to view comments")
+
+        return task.comments.order_by('created_at')
+
+    def perform_create(self, serializer):
+        task = get_object_or_404(Task, pk=self.kwargs['pk'])
+        user = self.request.user
+
+        if user != task.created_by and user != task.claimed_by:
+            raise PermissionDenied("Not allowed to comment")
+
+        serializer.save(task=task, user=user)
+
 
 # ============================
 # APPROVE TASK

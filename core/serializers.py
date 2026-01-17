@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Task, UserProfile, Payment
+from .models import *
 
 
 # -------------------------
@@ -18,7 +18,6 @@ class UserSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     claimed_by = UserSerializer(read_only=True)
-    proof_image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Task
@@ -30,7 +29,6 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_by',
             'claimed_by',
             'status',
-            'proof_image',
             'duration_minutes',
             'created_at',
             'updated_at',
@@ -45,6 +43,55 @@ class TaskSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
+
+class TaskCompletionSerializer(serializers.ModelSerializer):
+    completed_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = TaskCompletion
+        fields = [
+            'id',
+            'task',
+            'completed_by',
+            'proof_image',
+            'completion_details',
+            'created_at',
+        ]
+
+        read_only_fields = [
+            'id',
+            'completed_by',
+            'created_at',
+        ]
+
+class TaskCommentSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = TaskComment
+        fields = [
+            'id',
+            'task',
+            'user',
+            'message',
+            'created_at',
+        ]
+
+        read_only_fields = [
+            'id',
+            'user',
+            'created_at',
+        ]
+
+class TaskDetailSerializer(TaskSerializer):
+    completion = TaskCompletionSerializer(read_only=True)
+    comments = TaskCommentSerializer(many=True, read_only=True)
+
+    class Meta(TaskSerializer.Meta):
+        fields = TaskSerializer.Meta.fields + [
+            'completion',
+            'comments',
+        ]
 
 
 # -------------------------

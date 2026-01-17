@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import API_BASE from '../config/api';
 import { PlusCircle, CheckCircle, Shield, User } from 'lucide-react';
 
-const API_BASE = 'https://microtasks-api.onrender.com/api';
+// const API_BASE = 'https://microtasks-api.onrender.com/api';
 
 export default function WorkerDashboard() {
   const { user, logout } = useAuth();

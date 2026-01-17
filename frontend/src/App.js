@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import PostedTasks from './pages/PostedTasks';
 import ClaimedTasks from './pages/ClaimedTasks';
 import TaskHistory from './pages/TaskHistory';
+import CreateTask from './pages/CreateTask';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Spinner while loading auth state
@@ -88,6 +89,14 @@ function AppContent() {
               <TaskHistory />
             </ProtectedRoute>
           } 
+        />
+        <Route
+          path="/tasks/create"
+          element={
+            <ProtectedRoute>
+              <CreateTask />
+            </ProtectedRoute>
+          }
         />
 
         {/* Default route */}

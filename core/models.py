@@ -23,6 +23,7 @@ class UserProfile(models.Model):
     postal_code = models.CharField(max_length=10, default='000000')
 
 
+# Task Models
 class Task(models.Model):
     STATUS_CHOICES = [
         ('open', 'Open'), 
@@ -51,10 +52,50 @@ class Task(models.Model):
     )
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
-    proof_image = models.ImageField(upload_to='proofs/', blank=True, null=True)
     duration_minutes = models.IntegerField(default=15)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class TaskCompletion(models.Model):
+    task = models.OneToOneField(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='completion'
+    )
+
+    completed_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    proof_image = models.ImageField(upload_to='proofs/')
+    completion_details = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Completion for Task {self.task.id}"
+
+class TaskComment(models.Model):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    message = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.user} on Task {self.task.id}"
+
 
 
 class Payment(models.Model):

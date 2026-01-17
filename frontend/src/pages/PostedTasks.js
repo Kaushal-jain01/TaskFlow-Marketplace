@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE from '../config/api';
 
-const API_BASE = 'https://microtasks-api.onrender.com/api';
+// const API_BASE = 'https://microtasks-api.onrender.com/api';
 
 export default function ClaimedTasks({ userId }) {
   const [tasks, setTasks] = useState([]);

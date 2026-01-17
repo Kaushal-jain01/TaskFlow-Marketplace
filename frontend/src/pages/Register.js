@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import API_BASE from '../config/api';
 import axios from 'axios';
 
 export default function Register() {
@@ -24,7 +25,7 @@ export default function Register() {
     e.preventDefault();
     setError(''); // reset previous errors
     try {
-      await axios.post('https://microtasks-api.onrender.com/api/auth/register/', formData);
+      await axios.post(`${API_BASE}/auth/register/`, formData);
       navigate('/login');
     } catch (err) {
       // Backend may return detailed validation errors
