@@ -50,7 +50,7 @@ def worker_dashboard_stats(user_id):
         "claimed": Task.objects.filter(claimed_by=user).count(),
 
         "completed": Task.objects.filter(claimed_by=user ,
-                                        status__in=['completed', 'approved']
+                                        status__in=['completed', 'approved', 'paid']
                                         ).count(),
 
         "total_earnings": total_earnings,

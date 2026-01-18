@@ -185,11 +185,11 @@ export default function TaskDetail() {
           <h5>Completion Details:</h5>
           <p>{task.completion.completion_details}</p>
           {task.completion.proof_image && (
-            <img
-              src={`${API_BASE}${task.completion.proof_image}`}
-              alt="Proof"
-              className="img-fluid"
-            />
+           <img
+            src={`${API_BASE.replace(/\/api\/$/, '')}${task.completion.proof_image}`}
+            alt="Proof"
+            className="img-fluid"
+          />
           )}
         </div>
       )}
