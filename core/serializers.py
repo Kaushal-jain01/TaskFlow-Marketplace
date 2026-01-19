@@ -3,21 +3,17 @@ from django.contrib.auth.models import User
 from .models import *
 
 
-# -------------------------
 # User
-# -------------------------
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email']
 
 
-# -------------------------
 # Task
-# -------------------------
 class TaskSerializer(serializers.ModelSerializer):
-    created_by = UserSerializer(read_only=True)
-    claimed_by = UserSerializer(read_only=True)
+    created_by = UserSerializer()
+    claimed_by = UserSerializer()
 
     class Meta:
         model = Task
@@ -44,8 +40,9 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
 
 
+# Task Completion
 class TaskCompletionSerializer(serializers.ModelSerializer):
-    completed_by = UserSerializer(read_only=True)
+    completed_by = UserSerializer()
 
     class Meta:
         model = TaskCompletion
@@ -64,8 +61,9 @@ class TaskCompletionSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
+# Task comment
 class TaskCommentSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = UserSerializer()
 
     class Meta:
         model = TaskComment
@@ -83,6 +81,7 @@ class TaskCommentSerializer(serializers.ModelSerializer):
         ]
 
 
+# Task Detail
 class TaskDetailSerializer(TaskSerializer):
     completion = TaskCompletionSerializer(read_only=True)
     comments = TaskCommentSerializer(many=True, read_only=True)
@@ -94,9 +93,7 @@ class TaskDetailSerializer(TaskSerializer):
         ]
 
 
-# -------------------------
 # User Profile (registration)
-# -------------------------
 class UserProfileSerializer(serializers.ModelSerializer):
     """
     Used ONLY during registration
@@ -113,12 +110,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         ]
 
 
-
-# -------------------------
 # Profile View / Update
-# -------------------------
 class ProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = UserSerializer()
 
     class Meta:
         model = UserProfile
@@ -135,17 +129,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
 
 
-
-# -------------------------
 # Registration
-# -------------------------
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    profile = UserProfileSerializer()
+    profile = UserProfileSerializer() # This allows frontend to send nested profile 
+                                      # data at the time of user registration.
+                                      # profile in the serializer = virtual field
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'profile']
+        fields = ['username', 'email', 'password', 'profile'] # profile in fields = tells DRF 
+                                                              # to expect this key in input JSON
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
@@ -159,9 +153,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-# -------------------------
 # Payment
-# -------------------------
 class PaymentSerializer(serializers.ModelSerializer):
     task = TaskSerializer(read_only=True)
 

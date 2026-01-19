@@ -29,9 +29,8 @@ from .serializers import *
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-# ============================
+
 # TASK LIST + CREATE
-# ============================
 class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -80,9 +79,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
         invalidate_dashboard_cache(task)
 
 
-# ============================
 # TASK DETAIL
-# ============================
 class TaskDetailView(generics.RetrieveAPIView):
     serializer_class = TaskDetailSerializer
     permission_classes = [IsAuthenticated]
@@ -96,9 +93,8 @@ class TaskDetailView(generics.RetrieveAPIView):
         )
 
 
-# ============================
+
 # CLAIM TASK
-# ============================
 class ClaimTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -132,9 +128,8 @@ class ClaimTaskView(APIView):
             status=status.HTTP_200_OK
         )
 
-# ============================
+
 # COMPLETE TASK (UPLOAD PROOF)
-# ============================
 class CompleteTaskView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
@@ -190,9 +185,8 @@ class CompleteTaskView(APIView):
             status=status.HTTP_200_OK
         )
 
-# ============================
+
 # COMMENT ON TASK
-# ============================
 class TaskCommentListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskCommentSerializer
     permission_classes = [IsAuthenticated]
@@ -216,9 +210,8 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
         serializer.save(task=task, user=user)
 
 
-# ============================
+
 # APPROVE TASK
-# ============================
 class ApproveTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -245,9 +238,8 @@ class ApproveTaskView(APIView):
         })
 
 
-# ============================
+
 # PAY TASK (STRIPE)
-# ============================
 class PayTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -298,9 +290,8 @@ class PayTaskView(APIView):
             }
         })
     
-# ============================
+
 # STRIPE WEBHOOK
-# ============================
 @csrf_exempt
 @require_http_methods(["POST"])
 def stripe_webhook(request):
@@ -335,9 +326,8 @@ def stripe_webhook(request):
     return JsonResponse({"status": "success"})
 
 
-# ============================
+
 # AUTH / PROFILE
-# ============================
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -377,9 +367,8 @@ class PublicProfileView(generics.RetrieveAPIView):
         return get_object_or_404(UserProfile, user=user)
 
 
-# ============================
+
 # USERS (OPTIONAL)
-# ============================
 class GetAllUsers(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
@@ -388,9 +377,7 @@ class GetAllUsers(generics.ListAPIView):
 
 
 
-# ============================
 # DASHBOARD STATS
-# ============================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def business_dashboard_view(request):
