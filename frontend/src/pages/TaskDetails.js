@@ -50,6 +50,7 @@ export default function TaskDetail() {
   useEffect(() => {
     fetchTask();
     fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // -------------------------

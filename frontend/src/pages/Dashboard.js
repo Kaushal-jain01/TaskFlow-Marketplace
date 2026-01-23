@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import API_BASE from '../config/api';
@@ -9,7 +9,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 // const API_BASE = 'https://microtasks-api.onrender.com/api';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [tasks, setTasks] = useState([]);

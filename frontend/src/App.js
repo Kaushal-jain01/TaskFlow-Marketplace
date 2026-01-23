@@ -32,7 +32,7 @@ function ProtectedRoute({ children }) {
 
 // Redirect logged-in users away from login/register
 function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   // if (loading) return <LoadingSpinner />;
   return user ? <Navigate to="/dashboard" /> : children;
