@@ -184,6 +184,10 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React
+    "http://localhost:3000",
+    "https://task-flow-marketplace-2sty-6bdh4bv1r-kaushal-jains-projects.vercel.app",
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+
 
