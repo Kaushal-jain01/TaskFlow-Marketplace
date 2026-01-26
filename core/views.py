@@ -81,7 +81,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
 
 
 # TASK DETAIL
-class TaskDetailView(generics.RetrieveAPIView):
+class TaskDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = TaskDetailSerializer
     permission_classes = [IsAuthenticated]
 
@@ -92,6 +92,15 @@ class TaskDetailView(generics.RetrieveAPIView):
             Q(created_by=user) |
             Q(claimed_by=user)
         )
+    
+    def perform_destroy(self, instance):
+        # Only poster can delete
+        if instance.created_by != self.request.user:
+            raise PermissionDenied("Only the task creator can delete this task")
+        
+        invalidate_dashboard_cache(instance)
+        instance.delete()
+        
 
 
 
