@@ -28,6 +28,13 @@ from .serializers import *
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+# HEALTH CHECK
+class HealthCheckView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        return Response({"status": "awake"})
 
 
 # TASK LIST + CREATE
@@ -97,6 +104,9 @@ class TaskDetailView(generics.RetrieveDestroyAPIView):
         # Only poster can delete
         if instance.created_by != self.request.user:
             raise PermissionDenied("Only the task creator can delete this task")
+        
+        if instance.status != 'open':
+            raise PermissionDenied("Only open tasks can be deleted")
         
         invalidate_dashboard_cache(instance)
         instance.delete()

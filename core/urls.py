@@ -5,6 +5,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 urlpatterns = [
 
+    # HEALTH CHECK
+    path("health/", HealthCheckView.as_view(), name="health-check"),
+
     # AUTH / PROFILE
     path("auth/register/", RegisterView.as_view(), name="register"),
     path('auth/token/', TokenObtainPairView.as_view(), name='token'),
@@ -12,7 +15,6 @@ urlpatterns = [
     path("auth/profile/", ProfileView.as_view(), name="profile"),
     path("auth/profile/update/", ProfileUpdateView.as_view(), name="profile-update"),
     path("auth/profile/<str:username>/", PublicProfileView.as_view(), name="public-profile"),
-
 
     # TASKS
     path("tasks/", TaskListCreateView.as_view(), name="task-list-create"),
