@@ -158,7 +158,17 @@ SUPABASE_URL = config('SUPABASE_URL')
 SUPABASE_API_KEY = config('SUPABASE_API_KEY') 
 SUPABASE_BUCKET = config('SUPABASE_BUCKET', default='taskflow-marketplace-completion-proofs')
 
-DEFAULT_FILE_STORAGE = 'core.storage.SupabaseStorage'
+# DEFAULT_FILE_STORAGE = 'core.storage.SupabaseStorage'
+# Django 5.2 REQUIRED format
+STORAGES = {
+    "default": {
+        "BACKEND": "core.storage.SupabaseStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 
 # Debugging for storage setup
 print("🔍 LOADING DEFAULT_FILE_STORAGE...")
