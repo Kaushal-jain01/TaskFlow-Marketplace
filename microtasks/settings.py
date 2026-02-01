@@ -218,7 +218,8 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://microtasks-api.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
