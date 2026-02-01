@@ -160,6 +160,23 @@ SUPABASE_BUCKET = config('SUPABASE_BUCKET', default='taskflow-marketplace-comple
 
 DEFAULT_FILE_STORAGE = 'core.storage.SupabaseStorage'
 
+# Debugging for storage setup
+print("🔍 LOADING DEFAULT_FILE_STORAGE...")
+try:
+    import core.storage
+    print("✅ core.storage module imported")
+except ImportError as e:
+    print(f"❌ core.storage IMPORT FAILED: {e}")
+
+try:
+    from core.storage import SupabaseStorage
+    print("✅ SupabaseStorage class imported SUCCESS")
+    storage = SupabaseStorage()
+    print("✅ SupabaseStorage instance created")
+except Exception as e:
+    print(f"❌ SupabaseStorage FAILED: {type(e).__name__}: {e}")
+
+
 # Media Files
 
 # MEDIA_URL = '/media/'
