@@ -10,23 +10,24 @@ class SupabaseStorage(Storage):
         self.bucket = getattr(settings, 'SUPABASE_BUCKET', 'taskflow-marketplace-completion-proofs')
 
     def _save(self, name: str, content) -> str:
-        """Upload file to Supabase"""
-        # Read file content
-        content_file = content.file
-        content_file.seek(0)
-        file_bytes = BytesIO(content_file.read())
+        """Upload file to Supabase - FIXED VERSION"""
+        print(f"📤 UPLOADING {name}")  # Debug
+        
+        # FIX: Use content.read() directly, don't use .file
+        file_bytes = content.read()
         
         # Get content type
         content_type, _ = mimetypes.guess_type(name)
         if content_type is None:
             content_type = 'application/octet-stream'
-
+        
         # Upload to Supabase
         self.supabase.storage.from_(self.bucket).upload(
             name, 
             file_bytes, 
             {"content-type": content_type}
         )
+        print(f"✅ UPLOADED {name} to Supabase!")  # Debug
         return name
 
     def url(self, name: str, parameters=None, expire=None) -> str:
