@@ -157,7 +157,7 @@ class CompleteTaskView(APIView):
     @transaction.atomic
     def patch(self, request, pk):
         task = get_object_or_404(
-            Task.objects.select_for_update(),
+            Task.objects.all(),
             pk=pk,
             claimed_by=request.user,
             status='claimed'
