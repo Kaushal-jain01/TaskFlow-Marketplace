@@ -35,4 +35,4 @@ class SupabaseStorage(Storage):
     def url(self, name: str) -> str:
         return f"{self.url}/storage/v1/object/public/{self.bucket}/{name}"
 
-    def exists(self, name): return True
+    def exists(self, name): return False
