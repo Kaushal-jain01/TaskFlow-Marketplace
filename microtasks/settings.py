@@ -154,16 +154,17 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media Files
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
 # Supabase Storage 
 SUPABASE_URL = config('SUPABASE_URL')
 SUPABASE_API_KEY = config('SUPABASE_API_KEY') 
 SUPABASE_BUCKET = config('SUPABASE_BUCKET', default='taskflow-marketplace-completion-proofs')
+# ADD THIS LINE - tells Django to use your custom storage
+DEFAULT_FILE_STORAGE = 'core.storage.SupabaseStorage'
 
+# Media Files
+
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Default primary key field type
