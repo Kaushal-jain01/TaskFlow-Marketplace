@@ -182,6 +182,12 @@ class CompleteTaskView(APIView):
                 {"error": "Proof image and completion details are required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        # Add these 3 debug lines
+        from django.core.files.storage import default_storage
+        print("🎯 RENDER STORAGE:", default_storage.__class__.__name__)
+        print("🎯 SUPABASE_URL:", getattr(settings, 'SUPABASE_URL', 'MISSING'))
+        print("🎯 BUCKET:", getattr(settings, 'SUPABASE_BUCKET', 'MISSING'))
 
         # Create completion
         TaskCompletion.objects.create(
