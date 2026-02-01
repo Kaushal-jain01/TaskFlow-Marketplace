@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'storages',
     'core', 
 ]
 
@@ -159,10 +160,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Supabase Storage 
-DEFAULT_FILE_STORAGE = 'django_storage_supabase.supabase.SupabaseStorage'
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_API_KEY = os.getenv('SUPABASE_API_KEY')
-SUPABASE_BUCKET = os.getenv('SUPABASE_BUCKET', 'taskflow-marketplace-completion-proofs')
+SUPABASE_URL = config('SUPABASE_URL')
+SUPABASE_API_KEY = config('SUPABASE_API_KEY') 
+SUPABASE_BUCKET = config('SUPABASE_BUCKET', default='taskflow-marketplace-completion-proofs')
+
 
 
 # Default primary key field type
