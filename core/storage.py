@@ -35,4 +35,20 @@ class SupabaseStorage(Storage):
     def url(self, name: str) -> str:
         return f"{self.url}/storage/v1/object/public/{self.bucket}/{name}"
 
-    def exists(self, name): return False
+    def exists(self, name):
+        """Avoid infinite loops - cloud storage friendly"""
+        if not name:
+            return False
+        
+        # Quick check - don't always hit Supabase API
+        if name.startswith('proofs/'):
+            return False  # New uploads = don't exist yet
+        
+        # Optional: Real check for production
+        try:
+            check_url = f"{self.url}/storage/v1/object/{self.bucket}/{name}"
+            r = requests.head(check_url, headers=self.headers, timeout=2)
+            return r.status_code == 200
+        except:
+            return False
+

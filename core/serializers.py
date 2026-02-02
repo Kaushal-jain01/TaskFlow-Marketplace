@@ -50,7 +50,7 @@ class TaskCompletionSerializer(serializers.ModelSerializer):
             'id',
             'task',
             'completed_by',
-            # 'proof_image',
+            'proof_image',
             'completion_details',
             'created_at',
         ]
