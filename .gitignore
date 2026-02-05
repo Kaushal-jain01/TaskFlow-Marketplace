@@ -209,10 +209,6 @@ marimo/_lsp/
 __marimo__/
 
 
-# React
-frontend/node_modules/
-frontend/build/
-
 # OS / Editor
 .vscode/
 .idea/
