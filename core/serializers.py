@@ -174,3 +174,13 @@ class PaymentSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "message",
+            "is_read",
+            "created_at"
+        ]
