@@ -39,7 +39,6 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'corsheaders',                  # added for cors
-    'daphne',                     # added for channels
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,7 +48,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'core', 
-    'channels',   
 ]
 
 MIDDLEWARE = [
@@ -108,18 +106,13 @@ else:
 
 # Redis
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": os.environ.get("REDIS_URL"),
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -231,11 +224,4 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Django Channels
-ASGI_APPLICATION = "microtasks.asgi.application"
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    }
-}
