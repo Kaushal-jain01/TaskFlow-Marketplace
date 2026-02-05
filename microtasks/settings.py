@@ -39,6 +39,8 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'corsheaders',                  # added for cors
+    'daphne',                       # added for ASGI
+    'channels',                     # added for WebSockets
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,7 +80,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'microtasks.wsgi.application'
+# WSGI_APPLICATION = 'microtasks.wsgi.application'
 
 
 # Database
@@ -224,4 +226,16 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+
+# Channels
+ASGI_APPLICATION = "microtasks.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.environ.get("REDIS_URL")],
+        },
+    }
+}
 
