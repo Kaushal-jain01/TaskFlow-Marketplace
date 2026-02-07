@@ -1,8 +1,14 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+import logging
+
+logger = logging.getLogger("django")
 
 class NotificationConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
+        logger.info(f"WS scope user: {self.scope['user']}")
+
         if self.scope["user"].is_anonymous:
+            logger.warning("WS rejected: anonymous user")
             await self.close()
             return
 
@@ -15,13 +21,16 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
         await self.accept()
 
+        logger.info(f"WS connected: {self.group_name}")
+
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name
-        )
+        if hasattr(self, "group_name"):
+            await self.channel_layer.group_discard(
+                self.group_name,
+                self.channel_name
+            )
+            logger.info(f"WS disconnected: {self.group_name}")
 
     async def send_notification(self, event):
+        logger.info(f"WS send_notification: {event['data']}")
         await self.send_json(event["data"])
-
-
