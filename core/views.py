@@ -6,6 +6,9 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q
 from django.db import transaction
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -137,16 +140,38 @@ class ClaimTaskView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Update task
         task.claimed_by = request.user
         task.status = 'claimed'
         task.save()
 
         invalidate_dashboard_cache(task)
 
+        # SEND WEBSOCKET NOTIFICATION TO BUSINESS OWNER
+        channel_layer = get_channel_layer()
+
+        async_to_sync(channel_layer.group_send)(
+            f"user_{task.created_by.id}",   # business owner's group
+            {
+                "type": "send_notification",
+                "data": {
+                    "event": "TASK_CLAIMED",
+                    "task_id": task.id,
+                    "task_title": task.title,
+                    "claimed_by": request.user.username,
+                    "message": (
+                        f"Your task '{task.title}' was claimed by "
+                        f"{request.user.username}"
+                    )
+                }
+            }
+        )
+
         return Response(
             TaskSerializer(task).data,
             status=status.HTTP_200_OK
         )
+
 
 
 # COMPLETE TASK (UPLOAD PROOF)
