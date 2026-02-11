@@ -174,20 +174,20 @@ STORAGES = {
 
 
 # Debugging for storage setup
-print("🔍 LOADING DEFAULT_FILE_STORAGE...")
-try:
-    import core.storage
-    print("✅ core.storage module imported")
-except ImportError as e:
-    print(f"❌ core.storage IMPORT FAILED: {e}")
+# print("🔍 LOADING DEFAULT_FILE_STORAGE...")
+# try:
+#     import core.storage
+#     print("✅ core.storage module imported")
+# except ImportError as e:
+#     print(f"❌ core.storage IMPORT FAILED: {e}")
 
-try:
-    from core.storage import SupabaseStorage
-    print("✅ SupabaseStorage class imported SUCCESS")
-    storage = SupabaseStorage()
-    print("✅ SupabaseStorage instance created")
-except Exception as e:
-    print(f"❌ SupabaseStorage FAILED: {type(e).__name__}: {e}")
+# try:
+#     from core.storage import SupabaseStorage
+#     print("✅ SupabaseStorage class imported SUCCESS")
+#     storage = SupabaseStorage()
+#     print("✅ SupabaseStorage instance created")
+# except Exception as e:
+#     print(f"❌ SupabaseStorage FAILED: {type(e).__name__}: {e}")
 
 
 # Media Files
