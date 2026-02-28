@@ -46,7 +46,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
+        user = self.request.user # Get the logged-in user making the request
         queryset = Task.objects.all()
 
         status = self.request.query_params.get('status')
@@ -81,7 +81,17 @@ class TaskListCreateView(generics.ListCreateAPIView):
             )
 
         return queryset.order_by('-updated_at')
-
+    
+    """
+    perform_create() is a hook method that runs automatically when a new object is being created.
+    It is called after serializer validation but before the object is finally saved.
+    Internally, DRF does something like this:
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)   # 👈 this is called
+        return Response(serializer.data)
+    """
     def perform_create(self, serializer):
         if self.request.user.userprofile.role != 'business':
             raise PermissionDenied("Only business users can create tasks.")
@@ -103,8 +113,30 @@ class TaskDetailView(generics.RetrieveDestroyAPIView):
             Q(claimed_by=user)
         )
     
+    # Why we need get_queyset() here?
+    # If a user requests /tasks/7/:
+    # Task 7 exists but is not in this filtered queryset
+    # DRF returns 404 → user cannot see tasks they shouldn’t access
+
+    # Without get_queryset():
+    # DRF would try Task.objects.all() by default
+    # Anyone could access any task by PK → security hole
+    
     def perform_destroy(self, instance):
-        # Only poster can delete
+        # Why we need perform_destroy() here?
+        # Even after get_queryset() filters accessible tasks, we still need
+        # extra business rules for deletion:
+        # 1️⃣ Only the creator of the task can delete it
+
+        # 2️⃣ Only tasks with status 'open' can be deleted
+        
+        # After these checks pass, we can safely:
+        # 3️⃣ Run extra logic (like cache invalidation)
+        # 4️⃣ Delete the object instance from the database
+        
+        # So perform_destroy() is the **hook to enforce business rules and
+        # perform custom actions when deleting a single object**.
+        
         if instance.created_by != self.request.user:
             raise PermissionDenied("Only the task creator can delete this task")
         
@@ -113,8 +145,7 @@ class TaskDetailView(generics.RetrieveDestroyAPIView):
         
         invalidate_dashboard_cache(instance)
         instance.delete()
-        
-
+            
 
 
 # CLAIM TASK
@@ -148,24 +179,24 @@ class ClaimTaskView(APIView):
         invalidate_dashboard_cache(task)
 
         # SEND WEBSOCKET NOTIFICATION TO BUSINESS OWNER
-        channel_layer = get_channel_layer()
+        # channel_layer = get_channel_layer()
 
-        async_to_sync(channel_layer.group_send)(
-            f"user_{task.created_by.id}",   # business owner's group
-            {
-                "type": "send_notification",
-                "data": {
-                    "event": "TASK_CLAIMED",
-                    "task_id": task.id,
-                    "task_title": task.title,
-                    "claimed_by": request.user.username,
-                    "message": (
-                        f"Your task '{task.title}' was claimed by "
-                        f"{request.user.username}"
-                    )
-                }
-            }
-        )
+        # async_to_sync(channel_layer.group_send)(
+        #     f"user_{task.created_by.id}",   # business owner's group
+        #     {
+        #         "type": "send_notification",
+        #         "data": {
+        #             "event": "TASK_CLAIMED",
+        #             "task_id": task.id,
+        #             "task_title": task.title,
+        #             "claimed_by": request.user.username,
+        #             "message": (
+        #                 f"Your task '{task.title}' was claimed by "
+        #                 f"{request.user.username}"
+        #             )
+        #         }
+        #     }
+        # )
 
         return Response(
             TaskSerializer(task).data,
@@ -209,10 +240,10 @@ class CompleteTaskView(APIView):
             )
         
         # Add these 3 debug lines
-        from django.core.files.storage import default_storage
-        print("🎯 RENDER STORAGE:", default_storage.__class__.__name__)
-        print("🎯 SUPABASE_URL:", getattr(settings, 'SUPABASE_URL', 'MISSING'))
-        print("🎯 BUCKET:", getattr(settings, 'SUPABASE_BUCKET', 'MISSING'))
+        # from django.core.files.storage import default_storage
+        # print("🎯 RENDER STORAGE:", default_storage.__class__.__name__)
+        # print("🎯 SUPABASE_URL:", getattr(settings, 'SUPABASE_URL', 'MISSING'))
+        # print("🎯 BUCKET:", getattr(settings, 'SUPABASE_BUCKET', 'MISSING'))
 
         # Create completion
         TaskCompletion.objects.create(
@@ -251,6 +282,7 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
 
         return task.comments.order_by('created_at')
 
+    # This perform_create() method is called only after the serializer validates the incoming data for Comment. Once the data is validated, this method checks id the requested user is a Owner or Worker of the Task with the given pk. 
     def perform_create(self, serializer):
         task = get_object_or_404(Task, pk=self.kwargs['pk'])
         user = self.request.user
@@ -343,7 +375,8 @@ class PayTaskView(APIView):
     
 
 # STRIPE WEBHOOK
-@csrf_exempt
+# This is called by Stripe after payment is completed. It verifies the webhook, updates payment and task status in DB, then sends a websocket notification to the worker about the payment.
+@csrf_exempt 
 @require_http_methods(["POST"])
 def stripe_webhook(request):
     payload = request.body
@@ -397,11 +430,15 @@ class ProfileView(generics.RetrieveAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
+    # RetrieveAPIView is designed to return one object only.
+    # get_object() tells the view: “Which single database object should I return?”
     def get_object(self):
-        return self.request.user.userprofile
+        return self.request.user.userprofile 
+        # For the logged in user, it first fetches the related UserProfile object, then uses ProfileSerializer to convert that UserProfile instance into JSON data to send back in the API response.
 
 
 class ProfileUpdateView(generics.UpdateAPIView):
+    # generics.UpdateAPIView supports both PUT and PATCH by default
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 

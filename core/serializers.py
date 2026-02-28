@@ -141,6 +141,22 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', 'profile'] # profile in fields = tells DRF 
                                                               # to expect this key in input JSON
 
+    """
+    Expected req body for registration:
+    {
+        "username": "john_doe",
+        "email": "john@example.com",
+        "password": "StrongPassword123!",
+        "profile": {
+            "role": "customer",
+            "phone": "+1234567890",
+            "address_line1": "123 Main Street",
+            "city": "New York",
+            "country": "USA",
+            "postal_code": "10001"
+        }
+    }
+    """
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
         password = validated_data.pop('password')

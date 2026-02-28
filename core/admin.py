@@ -2,9 +2,7 @@ from django.contrib import admin
 from .models import Task, Payment, UserProfile
 
 
-# ============================
 # TASK ADMIN
-# ============================
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
     list_display = (
@@ -22,9 +20,8 @@ class TaskAdmin(admin.ModelAdmin):
     ordering = ('-updated_at',)
 
 
-# ============================
+
 # PAYMENT ADMIN
-# ============================
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = (
@@ -38,9 +35,8 @@ class PaymentAdmin(admin.ModelAdmin):
     search_fields = ('task__title',)
 
 
-# ============================
+
 # USER PROFILE ADMIN
-# ============================
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (

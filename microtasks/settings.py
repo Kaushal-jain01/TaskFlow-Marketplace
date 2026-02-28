@@ -45,8 +45,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 INSTALLED_APPS = [
     'corsheaders',                  # added for cors
-    'daphne',                       # added for ASGI
-    'channels',                     # added for WebSockets
+    # 'daphne',                       # added for ASGI
+    # 'channels',                     # added for WebSockets
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -67,7 +67,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middleware.RequestLogMiddleware',
+    # 'core.middleware.RequestLogMiddleware',
 ]
 
 ROOT_URLCONF = 'microtasks.urls'
@@ -235,14 +235,14 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 # Channels
-ASGI_APPLICATION = "microtasks.asgi.application"
+# ASGI_APPLICATION = "microtasks.asgi.application"
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [os.environ.get("REDIS_URL")],
-        },
-    }
-}
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [os.environ.get("REDIS_URL")],
+#         },
+#     }
+# }
 
