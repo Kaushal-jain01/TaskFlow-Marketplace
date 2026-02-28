@@ -32,6 +32,10 @@ urlpatterns = [
     # STRIPE WEBHOOK
     path("stripe/webhook/", stripe_webhook, name="stripe-webhook"),
 
+    # NOTIFICATIONS
+    path("notifications/", NotificationListView.as_view(), name="notification-list"),
+    path("notifications/<int:pk>/read/", MarkNotificationReadView.as_view(), name="notification-read"),
+
     # USERS (ADMIN ONLY)
     path("users/", GetAllUsers.as_view(), name="all-users"),
 

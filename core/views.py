@@ -496,6 +496,25 @@ class NotificationListView(generics.ListAPIView):
         ).order_by("-created_at")
 
 
+class MarkNotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        notification = get_object_or_404(
+            Notification,
+            pk=pk,
+            recipient=request.user  # 🔐 security check
+        )
+
+        notification.is_read = True
+        notification.save()
+
+        return Response(
+            {"message": "Notification marked as read"},
+            status=status.HTTP_200_OK
+        )
+
+
 # USERS (OPTIONAL)
 class GetAllUsers(generics.ListAPIView):
     serializer_class = UserSerializer
