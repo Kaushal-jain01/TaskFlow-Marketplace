@@ -6,8 +6,6 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q
 from django.db import transaction
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 
 
 from rest_framework import generics, status
