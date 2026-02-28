@@ -190,3 +190,36 @@ class PaymentSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    actor = serializers.SerializerMethodField()
+    task = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "type",
+            "message",
+            "is_read",
+            "created_at",
+            "actor",
+            "task",
+        ]
+
+    def get_actor(self, obj):
+        if obj.actor:
+            return {
+                "id": obj.actor.id,
+                "username": obj.actor.username
+            }
+        return None
+
+    def get_task(self, obj):
+        if obj.task:
+            return {
+                "id": obj.task.id,
+                "title": obj.task.title
+            }
+        return None

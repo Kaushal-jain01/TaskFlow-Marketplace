@@ -180,7 +180,8 @@ class ClaimTaskView(APIView):
             recipient=task.created_by,
             task=task,
             type='task_claimed',
-            message=f"Task '{task.title}' has been claimed by {request.user}."
+            message=f"Task '{task.title}' has been claimed.",
+            actor=request.user
         )
         invalidate_dashboard_cache(task)
 
@@ -267,7 +268,8 @@ class CompleteTaskView(APIView):
             recipient=task.created_by,
             task=task,
             type='task_completed',
-            message=f"Task '{task.title}' has been completed by {request.user}."
+            message=f"Task '{task.title}' has been completed.",
+            actor=request.user
         )
 
         invalidate_dashboard_cache(task)
@@ -330,7 +332,8 @@ class ApproveTaskView(APIView):
             recipient=task.claimed_by,
             task=task,
             type='task_approved',
-            message=f"Task '{task.title}' has been approved by {request.user}."
+            message=f"Task '{task.title}' has been approved.",
+            actor=request.user
         )
 
         invalidate_dashboard_cache(task)
@@ -423,6 +426,14 @@ def stripe_webhook(request):
         task.updated_at = timezone.now()
         task.save()
 
+        create_notification(
+            recipient=task.claimed_by,
+            task=task,
+            type='task_paid',
+            message=f"Task '{task.title}' has been paid.",
+            actor=task.created_by
+        )
+
         invalidate_dashboard_cache(task)
 
         print(f"✅ Task {task.id} PAID")
@@ -474,6 +485,15 @@ class PublicProfileView(generics.RetrieveAPIView):
         user = get_object_or_404(User, username=self.kwargs["username"])
         return get_object_or_404(UserProfile, user=user)
 
+# Notifications
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(
+            recipient=self.request.user
+        ).order_by("-created_at")
 
 
 # USERS (OPTIONAL)
@@ -498,3 +518,4 @@ def business_dashboard_view(request):
 def worker_dashboard_view(request):
     data = worker_dashboard_stats(request.user.id)
     return Response(data)
+

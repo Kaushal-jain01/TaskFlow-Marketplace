@@ -124,14 +124,21 @@ class Notification(models.Model):
         ('task_claimed', 'Task Claimed'),
         ('task_completed', 'Task Completed'),
         ('task_approved', 'Task Approved'),
-        ('task_commented', 'Task Commented'),
-        ('payment_paid', 'Payment Paid'),
+        ('task_paid', 'Task Paid'),
     ]
 
     recipient = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='notifications'
+    )
+
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='actions',
+        null=True,
+        blank=True
     )
 
     task = models.ForeignKey(
@@ -141,13 +148,10 @@ class Notification(models.Model):
         blank=True
     )
 
-    message = models.TextField()
-
     type = models.CharField(max_length=30, choices=TYPE_CHOICES)
+
+    message = models.TextField()
 
     is_read = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Notification for {self.recipient.username}"

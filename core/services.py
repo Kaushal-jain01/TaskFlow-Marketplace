@@ -78,10 +78,11 @@ def invalidate_dashboard_cache(task):
         cache.delete(f"dashboard:worker:{task.claimed_by_id}")
 
 
-def create_notification(recipient, task, type, message):
+def create_notification(recipient, task, type, message, actor=None):
     Notification.objects.create(
         recipient=recipient,
         task=task,
         type=type,
-        message=message
+        message=message,
+        actor=actor
     )
