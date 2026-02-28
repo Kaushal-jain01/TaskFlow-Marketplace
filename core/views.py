@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q
 from django.db import transaction
+# from channels.layers import get_channel_layer
+# from asgiref.sync import async_to_sync
 
 
 from rest_framework import generics, status
@@ -16,7 +18,6 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from rest_framework.decorators import api_view, permission_classes
-from .services import business_dashboard_stats, worker_dashboard_stats, invalidate_dashboard_cache
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -25,6 +26,7 @@ import stripe
 
 from .models import *
 from .serializers import *
+from .services import *
 
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -174,6 +176,12 @@ class ClaimTaskView(APIView):
         task.status = 'claimed'
         task.save()
 
+        create_notification(
+            recipient=task.created_by,
+            task=task,
+            type='task_claimed',
+            message=f"Task '{task.title}' has been claimed by {request.user}."
+        )
         invalidate_dashboard_cache(task)
 
         # SEND WEBSOCKET NOTIFICATION TO BUSINESS OWNER
@@ -255,6 +263,13 @@ class CompleteTaskView(APIView):
         task.status = 'completed'
         task.save()
 
+        create_notification(
+            recipient=task.created_by,
+            task=task,
+            type='task_completed',
+            message=f"Task '{task.title}' has been completed by {request.user}."
+        )
+
         invalidate_dashboard_cache(task)
 
         return Response(
@@ -310,6 +325,13 @@ class ApproveTaskView(APIView):
 
         task.status = 'approved'
         task.save()
+
+        create_notification(
+            recipient=task.claimed_by,
+            task=task,
+            type='task_approved',
+            message=f"Task '{task.title}' has been approved by {request.user}."
+        )
 
         invalidate_dashboard_cache(task)
 

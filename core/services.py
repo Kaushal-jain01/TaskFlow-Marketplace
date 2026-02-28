@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from .models import Task, User
+from .models import Task, User, Notification
 from django.db.models import Sum
 
 def business_dashboard_stats(user_id):
@@ -76,3 +76,12 @@ def invalidate_dashboard_cache(task):
     cache.delete(f"dashboard:business:{task.created_by_id}")
     if task.claimed_by_id:
         cache.delete(f"dashboard:worker:{task.claimed_by_id}")
+
+
+def create_notification(recipient, task, type, message):
+    Notification.objects.create(
+        recipient=recipient,
+        task=task,
+        type=type,
+        message=message
+    )

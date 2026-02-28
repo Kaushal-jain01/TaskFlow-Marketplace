@@ -116,3 +116,38 @@ class Payment(models.Model):
     def __str__(self):
         return f"Payment {self.id} for Task {self.task.id}"
 
+
+# Notifications
+class Notification(models.Model):
+
+    TYPE_CHOICES = [
+        ('task_claimed', 'Task Claimed'),
+        ('task_completed', 'Task Completed'),
+        ('task_approved', 'Task Approved'),
+        ('task_commented', 'Task Commented'),
+        ('payment_paid', 'Payment Paid'),
+    ]
+
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    message = models.TextField()
+
+    type = models.CharField(max_length=30, choices=TYPE_CHOICES)
+
+    is_read = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Notification for {self.recipient.username}"
