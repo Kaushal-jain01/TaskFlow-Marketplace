@@ -35,6 +35,7 @@ urlpatterns = [
     # NOTIFICATIONS
     path("notifications/", NotificationListView.as_view(), name="notification-list"),
     path("notifications/<int:pk>/read/", MarkNotificationReadView.as_view(), name="notification-read"),
+    path("notifications/unread-count/", UnreadNotificationCountView.as_view(), name="unread-notification-count"),
 
     # USERS (ADMIN ONLY)
     path("users/", GetAllUsers.as_view(), name="all-users"),
